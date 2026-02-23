@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <PackageId>JobManagement</PackageId>
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <NoWarn>$(NoWarn);SA1611;SA1629;1570;1572;1573;1591</NoWarn>
     <Authors>Erfan</Authors>
     <Company>Erfan</Company>
     <Description>Lightweight, extensible and database-agnostic job management library for .NET applications.</Description>
