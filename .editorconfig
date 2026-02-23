@@ -311,10 +311,8 @@ dotnet_diagnostic.SA1204.severity = warning
 dotnet_diagnostic.SA1512.severity = warning
 dotnet_diagnostic.SA1600.severity = warning
 dotnet_diagnostic.SA1602.severity = warning
-dotnet_diagnostic.SA1611.severity = warning
 dotnet_diagnostic.SA1615.severity = warning
 dotnet_diagnostic.SA1623.severity = warning
-dotnet_diagnostic.SA1629.severity = warning
 dotnet_diagnostic.SA1642.severity = warning
 dotnet_diagnostic.SA1649.severity = warning
 dotnet_diagnostic.S101.severity = warning
@@ -322,6 +320,9 @@ dotnet_diagnostic.S125.severity = warning
 dotnet_diagnostic.S1133.severity = warning
 dotnet_diagnostic.S1135.severity = warning
 dotnet_diagnostic.S6580.severity = warning
+dotnet_diagnostic.SA1611.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1618.severity = none
 
 
 ## StyleCop
