@@ -1,0 +1,51 @@
+name: build-test-pack-publish
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write  # لازم برای OIDC / Trusted Publishing
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # لازم برای ورژن‌دهی مبتنی بر git history
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Compute version (NBGV)
+        uses: dotnet/nbgv@master
+        id: nbgv
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack ./JobManagement/JobManagement.csproj -c Release -o ./artifacts --no-build /p:PackageVersion=${{ steps.nbgv.outputs.NuGetPackageVersion }}
+
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push packages to nuget.org
+        run: |
+          dotnet nuget push "./artifacts/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push "./artifacts/*.snupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
