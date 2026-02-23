@@ -1,0 +1,6 @@
+﻿{
+  "version": "0.0",
+  "publicReleaseRefSpec": [
+    "^refs/heads/main$"
+  ]
+}q
