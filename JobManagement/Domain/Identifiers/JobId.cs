@@ -61,4 +61,20 @@ public readonly record struct JobId
         jobId = new JobId(guid);
         return true;
     }
+
+    /// <summary>
+    ///     Parses a <see cref="JobId" /> from its string representation.
+    /// </summary>
+    /// <param name="value">String representation (GUID format).</param>
+    /// <returns>A parsed <see cref="JobId" />.</returns>
+    /// <exception cref="ArgumentNullException">If <paramref name="value" /> is null.</exception>
+    /// <exception cref="FormatException">If <paramref name="value" /> is not a valid GUID.</exception>
+    public static JobId Parse(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        return !Guid.TryParse(value, out Guid guid)
+            ? throw new FormatException($"'{value}' is not a valid JobId (GUID).")
+            : new JobId(guid);
+    }
 }
