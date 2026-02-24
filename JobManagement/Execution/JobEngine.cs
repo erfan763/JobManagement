@@ -127,10 +127,14 @@ public sealed class JobEngine : IJobEngine
         _events.Emit(job.Id, "job.dequeued", now, $"worker={_options.WorkerId}");
 
         string payloadType = job.Definition.Payload.Type;
+        Job runningJob = StartAttempt(job, now);
         if (!_handlers.TryResolve(payloadType, out IJobHandler handler))
         {
+            await _store.UpdateAsync(runningJob, cancellationToken).ConfigureAwait(false);
+            _events.Emit(job.Id, "job.running", now, $"attempt={runningJob.State.AttemptCount}");
+
             await HandleFailureAsync(
-                    job,
+                    runningJob,
                     lease,
                     now,
                     "HandlerNotFound",
@@ -140,8 +144,6 @@ public sealed class JobEngine : IJobEngine
 
             return true;
         }
-
-        Job runningJob = StartAttempt(job, now);
 
         await _store.UpdateAsync(runningJob, cancellationToken).ConfigureAwait(false);
         _events.Emit(job.Id, "job.running", now, $"attempt={runningJob.State.AttemptCount}");
@@ -212,6 +214,20 @@ public sealed class JobEngine : IJobEngine
             Status = JobStatus.Running,
             UpdatedAtUtc = nowUtc,
         };
+        if (job.State.Status == JobStatus.Scheduled &&
+            job.State.RunAtUtc is not null &&
+            job.State.RunAtUtc <= nowUtc)
+        {
+            job = job with
+            {
+                State = job.State with
+                {
+                    Status = JobStatus.Queued,
+                    RunAtUtc = null,
+                    UpdatedAtUtc = nowUtc,
+                },
+            };
+        }
 
         job.EnsureCanTransitionTo(JobStatus.Running);
 

@@ -27,12 +27,12 @@ public sealed record JobDefinition
     /// <summary>
     ///     Gets Priority used for job ordering.
     /// </summary>
-    public JobPriority Priority { get; init; } = JobPriority.Normal;
+    public JobPriority Priority { get; set; } = JobPriority.Normal;
 
     /// <summary>
     ///     Gets Retry policy used when a job fails.
     /// </summary>
-    public RetryPolicy RetryPolicy { get; init; } = RetryPolicy.Default;
+    public RetryPolicy RetryPolicy { get; set; } = RetryPolicy.Default;
 
     /// <summary>
     ///     Gets Optional timeout for a single attempt.

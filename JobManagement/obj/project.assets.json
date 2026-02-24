@@ -2392,7 +2392,6 @@
         }
       },
       "warningProperties": {
-        "allWarningsAsErrors": true,
         "warnAsError": [
           "NU1605"
         ],
@@ -2736,5 +2735,13 @@
         }
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Error occurred while getting package vulnerability data: No connection could be made because the target machine actively refused it. (127.0.0.1:12334)"
+    }
+  ]
 }

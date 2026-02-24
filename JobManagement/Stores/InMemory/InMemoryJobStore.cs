@@ -21,7 +21,6 @@ namespace JobManagement.Stores.InMemory;
 /// <param name="options">Optional configuration options.</param>
 public sealed class InMemoryJobStore(
     IClock clock,
-    long cleanupTicks,
     InMemoryJobStoreOptions options = null) : IJobStore
 {
     private readonly IClock _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -30,8 +29,6 @@ public sealed class InMemoryJobStore(
     private readonly ConcurrentDictionary<JobId, LeaseEntry> _leases = new();
 
     public InMemoryJobStoreOptions Options { get; } = options ?? new InMemoryJobStoreOptions();
-
-    public long CleanupTicks { get; } = cleanupTicks;
 
     public Task<Job> GetAsync(JobId jobId, CancellationToken cancellationToken = default)
     {
@@ -145,12 +142,41 @@ public sealed class InMemoryJobStore(
                 continue;
             }
 
+            Job current = job;
+            if (current.State.Status != JobStatus.Scheduled ||
+                current.State.RunAtUtc is null ||
+                !(current.State.RunAtUtc <= now))
+            {
+                return Task.FromResult(
+                    DequeueJobResult.Success(
+                        current,
+                        new JobLease
+                        {
+                            JobId = current.Id,
+                            LeaseToken = leaseToken,
+                            WorkerId = request.WorkerId,
+                            ExpiresAtUtc = expires,
+                        }));
+            }
+
+            current = current with
+            {
+                State = current.State with
+                {
+                    Status = JobStatus.Queued,
+                    UpdatedAtUtc = now,
+                    RunAtUtc = null,
+                },
+            };
+
+            _jobs[current.Id] = current;
+
             return Task.FromResult(
                 DequeueJobResult.Success(
-                    job,
+                    current,
                     new JobLease
                     {
-                        JobId = job.Id,
+                        JobId = current.Id,
                         LeaseToken = leaseToken,
                         WorkerId = request.WorkerId,
                         ExpiresAtUtc = expires,
@@ -166,7 +192,30 @@ public sealed class InMemoryJobStore(
         TimeSpan additionalTime,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_leases.TryGetValue(jobId, out LeaseEntry lease) ||
+            !string.Equals(lease.Token, leaseToken, StringComparison.Ordinal))
+        {
+            return Task.FromResult(false);
+        }
+
+        DateTimeOffset now = _clock.UtcNow;
+
+        if (now >= lease.ExpiresAtUtc)
+        {
+            _leases.TryRemove(jobId, out _);
+            return Task.FromResult(false);
+        }
+
+        DateTimeOffset baseTime = lease.ExpiresAtUtc > now ? lease.ExpiresAtUtc : now;
+        DateTimeOffset newExpiry = baseTime.Add(additionalTime);
+        _leases[jobId] = lease with
+        {
+            ExpiresAtUtc = newExpiry,
+        };
+
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />
@@ -176,19 +225,7 @@ public sealed class InMemoryJobStore(
         Job jobSnapshot,
         CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (!ValidateLease(jobId, leaseToken))
-        {
-            return Task.FromResult(false);
-        }
-
-        _jobs[jobId] = jobSnapshot;
-
-        // Always release lease after successful completion
-        _leases.TryRemove(jobId, out _);
-
-        return Task.FromResult(true);
+        return FinalizeAsync(jobId, leaseToken, jobSnapshot, true, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -198,25 +235,7 @@ public sealed class InMemoryJobStore(
         Job jobSnapshot,
         CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (!ValidateLease(jobId, leaseToken))
-        {
-            return Task.FromResult(false);
-        }
-
-        // Ensure job is in Failed state (defensive consistency)
-        if (jobSnapshot.State.Status != JobStatus.Failed)
-        {
-            throw new InvalidOperationException($"FailAsync requires job state to be '{JobStatus.Failed}'.");
-        }
-
-        _jobs[jobId] = jobSnapshot;
-
-        // Release lease so job can be retried if engine re-queues it
-        _leases.TryRemove(jobId, out _);
-
-        return Task.FromResult(true);
+        return FinalizeAsync(jobId, leaseToken, jobSnapshot, true, cancellationToken);
     }
 
     public Task<bool> CancelAsync(JobId jobId, CancellationToken cancellationToken = default)
@@ -249,6 +268,30 @@ public sealed class InMemoryJobStore(
                (job.State.Status == JobStatus.Scheduled &&
                 job.State.RunAtUtc is not null &&
                 job.State.RunAtUtc <= now);
+    }
+
+    private Task<bool> FinalizeAsync(
+        JobId jobId,
+        string leaseToken,
+        Job jobSnapshot,
+        bool releaseLease,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!ValidateLease(jobId, leaseToken))
+        {
+            return Task.FromResult(false);
+        }
+
+        _jobs[jobId] = jobSnapshot;
+
+        if (releaseLease)
+        {
+            _leases.TryRemove(jobId, out _);
+        }
+
+        return Task.FromResult(true);
     }
 
     private bool IsLeased(JobId jobId, DateTimeOffset now)

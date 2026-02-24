@@ -26,18 +26,12 @@ public static class ServiceCollectionExtensions
         Action<JobEngineOptions> configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-
         var options = new JobEngineOptions();
         configure?.Invoke(options);
-
         services.AddSingleton(options);
-
         services.AddSingleton<IClock, SystemClock>();
 
-        // Default telemetry is no-op; user can override by registering IJobEventSink before/after.
         services.TryAddSingleton<IJobEventSink, NullJobEventSink>();
-
-        // Handler registry is built from registered IJobHandler instances.
         services.AddSingleton<IJobHandlerRegistry>(sp =>
         {
             IEnumerable<IJobHandler> handlers = sp.GetServices<IJobHandler>();
@@ -45,7 +39,6 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<IJobEngine, JobEngine>();
-
         return services;
     }
 
@@ -63,7 +56,11 @@ public static class ServiceCollectionExtensions
         configure?.Invoke(options);
 
         services.AddSingleton(options);
-        services.AddSingleton<IJobStore, InMemoryJobStore>();
+
+        services.AddSingleton<IJobStore>(sp =>
+            new InMemoryJobStore(
+                sp.GetRequiredService<IClock>(),
+                sp.GetRequiredService<InMemoryJobStoreOptions>()));
 
         return services;
     }
@@ -75,7 +72,6 @@ public static class ServiceCollectionExtensions
         where THandler : class, IJobHandler
     {
         ArgumentNullException.ThrowIfNull(services);
-
         services.AddSingleton<IJobHandler, THandler>();
         return services;
     }
@@ -88,13 +84,25 @@ public static class ServiceCollectionExtensions
         Action<JobWorkerOptions> configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-
         var options = new JobWorkerOptions();
         configure?.Invoke(options);
-
         services.AddSingleton(options);
         services.AddHostedService<JobWorker>();
 
+        return services;
+    }
+}
+
+public static class JobManagementLoggingExtensions
+{
+    /// <summary>
+    ///     Registers a logger-backed <see cref="IJobEventSink" /> that prints engine events.
+    /// </summary>
+    /// <returns>Return Final Service. </returns>
+    public static IServiceCollection AddJobManagementLogging(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddSingleton<IJobEventSink, LoggingJobEventSink>();
         return services;
     }
 }

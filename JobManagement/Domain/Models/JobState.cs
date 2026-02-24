@@ -8,39 +8,39 @@ namespace JobManagement.Domain.Models;
 public sealed record JobState
 {
     /// <summary>
-    ///     Gets Current status.
+    ///     Gets or sets current status.
     /// </summary>
-    public JobStatus Status { get; init; } = JobStatus.Queued;
+    public JobStatus Status { get; set; } = JobStatus.Queued;
 
     /// <summary>
-    ///     Gets UTC time when the job was created.
+    ///     Gets or sets UTC time when the job was created.
     /// </summary>
-    public DateTimeOffset CreatedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
-    ///     Gets UTC time when the job was last updated.
+    ///     Gets or sets UTC time when the job was last updated.
     /// </summary>
-    public DateTimeOffset UpdatedAtUtc { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset UpdatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
-    ///     Gets UTC time when the job is eligible to run (for scheduled jobs).
+    ///     Gets or sets UTC time when the job is eligible to run (for scheduled jobs).
     /// </summary>
-    public DateTimeOffset? RunAtUtc { get; init; }
+    public DateTimeOffset? RunAtUtc { get; set; }
 
     /// <summary>
-    ///     Gets Attempt history (ordered).
+    ///     Gets or sets Attempt history (ordered).
     /// </summary>
-    public IReadOnlyList<JobAttempt> Attempts { get; init; } = [];
+    public IReadOnlyList<JobAttempt> Attempts { get; set; } = [];
 
     /// <summary>
-    ///     Gets Optional correlation id from the caller (e.g., request id / trace id).
+    ///     Gets or sets Optional correlation id from the caller (e.g., request id / trace id).
     /// </summary>
-    public string CorrelationId { get; init; }
+    public string CorrelationId { get; set; }
 
     /// <summary>
-    ///     Gets   Optional arbitrary tags/labels for searching.
+    ///     Gets or sets   Optional arbitrary tags/labels for searching.
     /// </summary>
-    public IReadOnlyDictionary<string, string> Tags { get; init; } =
+    public IReadOnlyDictionary<string, string> Tags { get; set; } =
         new Dictionary<string, string>();
 
     /// <summary>

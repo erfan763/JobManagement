@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Lightweight, extensible and database-agnostic job management library for .NET app" +
     "lications."))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9918544b66e8184303dd098a70ee078b041a034c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6413ef1686c5f9be7846182bbc7b82bc90e8ce5")]
 [assembly: System.Reflection.AssemblyProductAttribute("JobManagement")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JobManagement")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

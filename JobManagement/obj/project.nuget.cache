@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "1r2yyJwZCQY=",
+  "dgSpecHash": "38m3h5KdtUc=",
   "success": true,
   "projectFilePath": "C:\\Users\\ASUS\\RiderProjects\\JobManagement\\JobManagement\\JobManagement.csproj",
   "expectedPackageFiles": [
@@ -37,5 +37,15 @@
     "C:\\Users\\ASUS\\.nuget\\packages\\stylecop.analyzers.unstable\\1.2.0.556\\stylecop.analyzers.unstable.1.2.0.556.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\system.diagnostics.eventlog\\10.0.3\\system.diagnostics.eventlog.10.0.3.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "message": "Error occurred while getting package vulnerability data: No connection could be made because the target machine actively refused it. (127.0.0.1:12334)",
+      "projectPath": "C:\\Users\\ASUS\\RiderProjects\\JobManagement\\JobManagement\\JobManagement.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\ASUS\\RiderProjects\\JobManagement\\JobManagement\\JobManagement.csproj",
+      "targetGraphs": []
+    }
+  ]
 }
